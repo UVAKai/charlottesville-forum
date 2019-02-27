@@ -1,104 +1,136 @@
 import { Injectable } from '@angular/core';
 
 import { MarketEntry } from '../models/market-entry.model';
-import * as sampleData1 from '../samples/166bfaabf1bc10df.json';
-import * as sampleData2 from '../samples/166ca5af70615e18.json';
 import { Entry } from '../models/entry.model';
+import {HttpClient, HttpResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { RentingEntry } from '../models/renting-entry.model';
+import { RidesEntry } from '../models/rides-entry.model';
+import { OthersEntry } from '../models/others-entry.model';
 
-const MARKETENTRIES = [
-  new MarketEntry(
-    '0',
-    sampleData2.payload.headers.find(x => x.name === 'Subject').value,
-    sampleData2.snippet,
-    sampleData2.payload.headers.find(x => x.name === 'From').value,
-    'market',
-    false,
-    [
-      'http://media.4rgos.it/i/Argos/5399785_R_Z001A?$Web$&$DefaultPDP570$'
-    ],
-    [
-      {
-        itemName: '\u81EA\u884C\u8F66',
-        itemNum: 1,
-        price: 55,
-        image: 'https://img13.360buyimg.com/n1/jfs/t27568/266/313579453/435818/ba562940/5b8e2eefN8e950904.jpg'
-      },
-      {
-        itemName: '\u81EA\u884C\u8F66',
-        itemNum: 1,
-        price: 55,
-        image: 'https://img13.360buyimg.com/n1/jfs/t27568/266/313579453/435818/ba562940/5b8e2eefN8e950904.jpg'
-      }
-    ]
-  ),
-  new MarketEntry(
-    '1',
-    'sell the pan',
-    'I want to sell the pan, see the price and fig below',
-    'Doug <mmagou2017@gmail.com>',
-    'market',
-    true,
-    [
-      'http://pic.baike.soso.com/p/20140521/20140521204520-544920324.jpg'
-    ],
-    [
-      {
-        itemName: 'pan',
-        itemNum: 1,
-        price: 5,
-        image: 'https://mail.google.com/mail/u/1?ui=2&ik=2957901240&attid=0.1.7.0.1&permmsgid=msg-f:1617215063408365338&th=1671808823ddcf1a&view=att&disp=safe&realattid=f_johydzw82'
-      }
-    ]
-  ),
-  new MarketEntry(
-    '2',
-    sampleData1.payload.headers.find(x => x.name === 'Subject').value,
-    sampleData1.snippet,
-    sampleData1.payload.headers.find(x => x.name === 'From').value,
-    'market',
-    true,
-    [
-      'http://pic.baike.soso.com/p/20140521/20140521204520-544920324.jpg'
-    ],
-    [
-      {
-        itemName: undefined,
-        itemNum: undefined,
-        price: undefined,
-        image: 'http://pic.baike.soso.com/p/20140521/20140521204520-544920324.jpg'
-      }
-    ]
-  ),
-];
+// const SERVER = 'http://ec2-54-198-47-214.compute-1.amazonaws.com:3000/';
+const SERVER = 'http://localhost:3000/';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
 
-  MarketEntries: MarketEntry[] = MARKETENTRIES.filter( entry => entry.category === 'market');
+  private marketEntries = new BehaviorSubject<MarketEntry[]>([]);
+  private rentingEntries = new BehaviorSubject<RentingEntry[]>([]);
+  private ridesEntries = new BehaviorSubject<RidesEntry[]>([]);
+  private othersEntries = new BehaviorSubject<OthersEntry[]>([]);
 
   categories = ['market', 'renting', 'rides', 'others'];
+  nego_options = [true, false];
+  user = 'test';
+  email = 'test@test.com';
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
-  getMarketEntries(): MarketEntry[] {
-    return this.MarketEntries;
+  getMarketEntries(): Observable<MarketEntry[]> {
+    const params = new HttpParams().set('category', 'market');
+    this.http.get( SERVER + 'api/v1/posts', {params: params})
+             .toPromise()
+             .then(
+               (res: MarketEntry[]) => {
+                this.marketEntries.next(res);
+               }).catch(this.handleError);
+             return this.marketEntries.asObservable();
   }
 
-  getMarketEntry(id: string): MarketEntry {
-    return this.MarketEntries.find(marketEntry => marketEntry.id === id);
+  getRentingEntries(): Observable<RentingEntry[]> {
+    const params = new HttpParams().set('category', 'renting');
+    this.http.get( SERVER + 'api/v1/posts', {params: params})
+             .toPromise()
+             .then(
+               (res: RentingEntry[]) => {
+                this.rentingEntries.next(res);
+               }).catch(this.handleError);
+             return this.rentingEntries.asObservable();
+  }
+
+
+  getRidesEntries(): Observable<RidesEntry[]> {
+    const params = new HttpParams().set('category', 'rides');
+    this.http.get( SERVER + 'api/v1/posts', {params: params})
+             .toPromise()
+             .then(
+               (res: RidesEntry[]) => {
+                this.ridesEntries.next(res);
+               }).catch(this.handleError);
+             return this.ridesEntries.asObservable();
+  }
+  getOthersEntries(): Observable<OthersEntry[]> {
+    const params = new HttpParams().set('category', 'others');
+    this.http.get( SERVER + 'api/v1/posts', {params: params})
+             .toPromise()
+             .then(
+               (res: OthersEntry[]) => {
+                this.othersEntries.next(res);
+               }).catch(this.handleError);
+             return this.othersEntries.asObservable();
+  }
+
+  getMarketEntry(id: string): Promise<MarketEntry> {
+    // const params = new HttpParams().set('id', id);
+    return this.http.get(SERVER + `api/v1/posts/${id}`)
+                    .toPromise()
+                    .then((res: HttpResponse<any>) => res)
+                    .catch(this.handleError);
+  }
+
+  getRentingEntry(id: string): Promise<MarketEntry> {
+    // const params = new HttpParams().set('id', id);
+    return this.http.get(SERVER + `api/v1/posts/${id}`)
+                    .toPromise()
+                    .then((res: HttpResponse<any>) => res)
+                    .catch(this.handleError);
+  }
+
+
+  getRidesEntry(id: string): Promise<RidesEntry> {
+    // const params = new HttpParams().set('id', id);
+    return this.http.get(SERVER + `api/v1/posts/${id}`)
+                    .toPromise()
+                    .then((res: HttpResponse<any>) => res)
+                    .catch(this.handleError);
+  }
+  getOthersEntry(id: string): Promise<OthersEntry> {
+    // const params = new HttpParams().set('id', id);
+    return this.http.get(SERVER + `api/v1/posts/${id}`)
+                    .toPromise()
+                    .then((res: HttpResponse<any>) => res)
+                    .catch(this.handleError);
+  }
+
+  private handleError(err: any): Promise<any> {
+    console.error('An erro occurred', err);
+    return Promise.reject(err.body || err);
   }
 
   addMarketEntry(marketEntry: MarketEntry) {
-    marketEntry.id = (this.MarketEntries.length + 1).toString();
-    this.MarketEntries.push(marketEntry);
+    const httpOptions = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    };
+    console.log(marketEntry);
+    return this.http.post(SERVER + 'api/v1/posts', marketEntry, httpOptions)
+                    .toPromise()
+                    .then( (res: HttpResponse<any>) => {
+                      this.getMarketEntries();
+                      return res;
+                    })
+                    .catch(this.handleError);
   }
 
   addEntry(entry: Entry) {
+    entry.user = this.user;
+    entry.email = this.email;
     console.log(entry.category);
     switch (entry.category) {
-      case 'market': this.addMarketEntry(entry);
+      case 'market': return this.addMarketEntry(entry);
     }
   }
 }

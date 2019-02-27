@@ -12,11 +12,19 @@ export class MarketDetailComponent implements OnInit {
 
   marketEntry: MarketEntry;
 
-  constructor(private dataService: DataService, private activatedRoute: ActivatedRoute) {}
+  constructor(private dataService: DataService, private activatedRoute: ActivatedRoute) { }
 
   ngOnInit() {
-    this.activatedRoute.params.subscribe( params =>
-      this.marketEntry = this.dataService.getMarketEntry(params['id'])
+    this.activatedRoute.params.subscribe(params => {
+      console.log(params['id']);
+      this.dataService.getMarketEntry(params['id'])
+        .then(marketEntry => {
+          console.log(marketEntry.imagePaths);
+          // if (marketEntry.imagePaths.length !== 0) { marketEntry.imagePaths = JSON.parse(marketEntry.imagePaths[0]); }
+          console.log(marketEntry.imagePaths);
+          this.marketEntry = marketEntry;
+        });
+    }
     );
   }
 
